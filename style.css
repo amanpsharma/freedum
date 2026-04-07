@@ -39,7 +39,6 @@ iframe {
 /* ── Clip Freedium's own site header from iframe ── */
 #frame {
   --clip-top: 130px;
-  height: calc(100% + var(--clip-top));
 }
 
 /* ── Scroll overlay (sits above iframe, captures swipe) ── */
