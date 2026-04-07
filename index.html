@@ -2,78 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Freedium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-      }
-      iframe {
-        border: none;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body class="bg-zinc-950 text-white h-screen flex flex-col overflow-hidden">
-    <!-- Very simple top bar -->
-    <div
-      class="flex items-center gap-3 bg-zinc-900 p-4 border-b border-white/10"
-    >
-      <!-- Simple textbox -->
-      <input
-        id="urlInput"
-        type="text"
-        placeholder="Paste Medium link here..."
-        class="flex-1 bg-transparent text-white placeholder:text-zinc-400 px-4 py-3 text-base outline-none border border-white/30 focus:border-cyan-400 rounded-2xl"
-        autofocus
-      />
+  <body class="bg-zinc-950 text-white h-screen">
 
-      <button
-        onclick="loadArticle()"
-        class="w-11 h-11 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 transition-colors rounded-2xl flex items-center justify-center text-black text-3xl font-light"
-      >
-        →
+    <!-- Drawer overlay -->
+    <div id="drawerOverlay" onclick="closeDrawer()"></div>
+
+    <!-- Side drawer -->
+    <div id="drawer" class="bg-zinc-900 border-r border-white/10 flex flex-col">
+      <div class="flex items-center justify-between px-4 py-4 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span class="font-semibold text-sm">Saved Links</span>
+        </div>
+        <button onclick="closeDrawer()"
+          class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-zinc-500 hover:text-white transition-colors">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/>
+          </svg>
+        </button>
+      </div>
+      <div id="savedList" class="flex-1 overflow-y-auto p-2.5 space-y-0.5"></div>
+    </div>
+
+    <!-- Top bar -->
+    <div id="topBar" class="flex items-center gap-2.5 bg-zinc-900/96 px-3 py-2.5 border-b border-white/10">
+      <button onclick="openDrawer()"
+        class="w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors flex-shrink-0">
+        <span class="w-[17px] h-[1.5px] bg-white rounded-full block"></span>
+        <span class="w-[17px] h-[1.5px] bg-white rounded-full block"></span>
+        <span class="w-[17px] h-[1.5px] bg-white rounded-full block"></span>
+      </button>
+      <input id="urlInput" type="url" inputmode="url" placeholder="Paste Medium link here..."
+        class="flex-1 min-w-0 bg-white/5 text-white placeholder:text-zinc-500 px-3.5 py-2.5 outline-none border border-white/15 focus:border-cyan-400/70 rounded-2xl transition-colors" />
+      <button onclick="loadArticle()"
+        class="w-11 h-11 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 transition-colors rounded-2xl flex items-center justify-center text-black flex-shrink-0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
       </button>
     </div>
 
-    <!-- Full screen web view -->
-    <div id="webContainer" class="flex-1 hidden bg-white">
-      <iframe id="articleFrame" class="w-full h-full"></iframe>
+    <!-- Peek pill -->
+    <div id="peekPill">
+      <button onclick="showBar()"
+        class="px-7 py-1 rounded-b-2xl border border-white/10 border-t-0 text-zinc-500 hover:text-white transition-colors flex items-center">
+        <svg width="14" height="7" viewBox="0 0 14 7" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 1 7 6 13 1"/>
+        </svg>
+      </button>
     </div>
 
-    <script>
-      function loadArticle() {
-        const input = document.getElementById("urlInput").value.trim();
-        if (!input) return;
+    <!-- Save button -->
+    <button id="saveBtn" onclick="saveLink()">
+      <svg id="saveIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
 
-        let url = input;
-        if (!url.startsWith("http")) {
-          url = "https://" + url;
-        }
+    <!-- Main content -->
+    <div id="main" class="h-screen flex flex-col">
 
-        const freediumUrl = `https://freedium-mirror.cfd/${url}`;
+      <!-- Empty state -->
+      <div id="empty" class="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-600 select-none">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <p class="text-sm">Paste a Medium link above to read for free</p>
+      </div>
 
-        const container = document.getElementById("webContainer");
-        const iframe = document.getElementById("articleFrame");
+      <!-- Webview -->
+      <div id="wv" class="hidden flex-1 relative">
+        <div id="scrollOverlay"></div>
+        <iframe id="frame" class="w-full h-full"></iframe>
+      </div>
+    </div>
 
-        iframe.src = freediumUrl;
-        container.classList.remove("hidden");
-      }
-
-      // Press Enter
-      document
-        .getElementById("urlInput")
-        .addEventListener("keypress", function (e) {
-          if (e.key === "Enter") {
-            loadArticle();
-          }
-        });
-    </script>
+    <script src="app.js"></script>
   </body>
 </html>
